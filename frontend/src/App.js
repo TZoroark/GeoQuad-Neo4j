@@ -107,7 +107,7 @@ function App() {
   ];
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/shapes')
+    fetch('https://geoquad-neo4j.onrender.com/api/shapes')
       .then((response) => response.json())
       .then((data) => setShapes(data))
       .catch((err) => setError(err.message));
