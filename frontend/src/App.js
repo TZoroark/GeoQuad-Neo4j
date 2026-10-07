@@ -106,12 +106,13 @@ function App() {
     { x: 15, y: -25 }   
   ];
 
-  useEffect(() => {
+useEffect(() => {
     fetch('https://geoquad-neo4j.onrender.com/api/shapes')
       .then((response) => response.json())
       .then((data) => setShapes(data))
       .catch((err) => setError(err.message));
     checkShape(points);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const checkShape = (pts) => {
