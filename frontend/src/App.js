@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Stage, Layer, Line, Circle, Text } from 'react-konva';
 import 'katex/dist/katex.min.css';
 import { BlockMath } from 'react-katex';
+import './App.css'; // QUAN TRỌNG: Kéo file CSS vào
 
 // --- TỪ ĐIỂN TÍNH CHẤT CHI TIẾT ---
 const SHAPE_PROPERTIES = {
@@ -13,37 +14,20 @@ const SHAPE_PROPERTIES = {
   "Hình vuông": ["Có 4 góc vuông (90°) và 4 cạnh bằng nhau.", "Hai đường chéo bằng nhau, vuông góc tại trung điểm.", "Hai đường chéo là đường phân giác của các góc.", "Có tâm đối xứng và 4 trục đối xứng."]
 };
 
-// --- TỪ ĐIỂN CÔNG THỨC TOÁN HỌC (ĐÃ SỬA LỖI TRÀN DÒNG) ---
 const SHAPE_FORMULAS = {
   "Tứ giác lồi": {
     perimeter: "P = a + b + c + d",
     area: "\\begin{aligned} S &= \\frac{1}{2} |(x_A - x_C)(y_B - y_D) \\\\ &\\quad - (x_B - x_D)(y_A - y_C)| \\end{aligned}"
   },
-  "Hình thang": {
-    perimeter: "P = a + b + c + d",
-    area: "S = \\frac{(a + b) \\times h}{2}"
-  },
-  "Hình bình hành": {
-    perimeter: "P = 2(a + b)",
-    area: "S = a \\times h"
-  },
-  "Hình chữ nhật": {
-    perimeter: "P = 2(a + b)",
-    area: "S = a \\times b"
-  },
-  "Hình thoi": {
-    perimeter: "P = 4a",
-    area: "S = \\frac{1}{2} (d_1 \\times d_2)"
-  },
-  "Hình vuông": {
-    perimeter: "P = 4a",
-    area: "S = a^2"
-  }
+  "Hình thang": { perimeter: "P = a + b + c + d", area: "S = \\frac{(a + b) \\times h}{2}" },
+  "Hình bình hành": { perimeter: "P = 2(a + b)", area: "S = a \\times h" },
+  "Hình chữ nhật": { perimeter: "P = 2(a + b)", area: "S = a \\times b" },
+  "Hình thoi": { perimeter: "P = 4a", area: "S = \\frac{1}{2} (d_1 \\times d_2)" },
+  "Hình vuông": { perimeter: "P = 4a", area: "S = a^2" }
 };
 
 const SHAPES_LIST = ["Hình thang", "Hình bình hành", "Hình chữ nhật", "Hình thoi", "Hình vuông"];
 
-// --- CÁC HÀM TOÁN HỌC ---
 const getDistance = (p1, p2) => Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
 const getMidpoint = (p1, p2) => ({ x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 });
 
@@ -81,7 +65,6 @@ function App() {
   const [shapes, setShapes] = useState([]);
   const [error, setError] = useState(null);
   const [detectedShape, setDetectedShape] = useState("Tứ giác lồi");
-  
   const [challenge, setChallenge] = useState("Hình bình hành");
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -92,21 +75,10 @@ function App() {
     { id: 'D', x: 100, y: 300 },
   ]);
 
-  const nameOffsets = [
-    { x: -25, y: -25 }, 
-    { x: 15, y: -25 },  
-    { x: 15, y: 15 },   
-    { x: -25, y: 15 }   
-  ];
+  const nameOffsets = [{ x: -25, y: -25 }, { x: 15, y: -25 }, { x: 15, y: 15 }, { x: -25, y: 15 }];
+  const angleOffsets = [{ x: 15, y: 10 }, { x: -45, y: 10 }, { x: -45, y: -25 }, { x: 15, y: -25 }];
 
-  const angleOffsets = [
-    { x: 15, y: 10 },   
-    { x: -45, y: 10 },  
-    { x: -45, y: -25 }, 
-    { x: 15, y: -25 }   
-  ];
-
-useEffect(() => {
+  useEffect(() => {
     fetch('https://geoquad-neo4j.onrender.com/api/shapes')
       .then((response) => response.json())
       .then((data) => setShapes(data))
@@ -117,22 +89,14 @@ useEffect(() => {
 
   const checkShape = (pts) => {
     const [A, B, C, D] = pts;
-
-    const AB = getDistance(A, B);
-    const BC = getDistance(B, C);
-    const CD = getDistance(C, D);
-    const DA = getDistance(D, A);
-    const AC = getDistance(A, C);
-    const BD = getDistance(B, D);
-
-    const isAB_CD_Parallel = areParallel(A, B, C, D);
-    const isAD_BC_Parallel = areParallel(A, D, B, C);
+    const AB = getDistance(A, B), BC = getDistance(B, C), CD = getDistance(C, D), DA = getDistance(D, A);
+    const AC = getDistance(A, C), BD = getDistance(B, D);
 
     const isParallelogram = isClose(AB, CD) && isClose(BC, DA);
     const isRhombus = isParallelogram && isClose(AB, BC);
     const isRectangle = isParallelogram && isClose(AC, BD); 
     const isSquare = isRhombus && isRectangle;
-    const isTrapezoid = isAB_CD_Parallel || isAD_BC_Parallel;
+    const isTrapezoid = areParallel(A, B, C, D) || areParallel(A, D, B, C);
 
     let currentShape = "Tứ giác lồi";
     if (isSquare) currentShape = "Hình vuông";
@@ -153,30 +117,24 @@ useEffect(() => {
   };
 
   const generateNewChallenge = () => {
-    const randomShape = SHAPES_LIST[Math.floor(Math.random() * SHAPES_LIST.length)];
-    setChallenge(randomShape);
+    setChallenge(SHAPES_LIST[Math.floor(Math.random() * SHAPES_LIST.length)]);
     setIsSuccess(false);
   };
 
   const flattenedPoints = points.flatMap((p) => [p.x, p.y]);
-
   const [A, B, C, D] = points;
   const midAB = getMidpoint(A, B), midBC = getMidpoint(B, C), midCD = getMidpoint(C, D), midDA = getMidpoint(D, A);
   
-  const angleA = getAngle(D, A, B);
-  const angleB = getAngle(A, B, C);
-  const angleC = getAngle(B, C, D);
-  const angleD = getAngle(C, D, A);
-  
+  const angleA = getAngle(D, A, B), angleB = getAngle(A, B, C), angleC = getAngle(B, C, D), angleD = getAngle(C, D, A);
   const perimeter = getDistance(A, B) + getDistance(B, C) + getDistance(C, D) + getDistance(D, A);
   const area = getArea(points);
 
   return (
-    <div style={{ padding: '30px', fontFamily: 'sans-serif', display: 'flex', gap: '40px', backgroundColor: '#fafafa', minHeight: '100vh' }}>
+    <div className="app-container">
       
       {/* CỘT TRÁI: Bảng vẽ & Minigame */}
-      <div style={{ flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="left-column">
+        <div className="header-mobile">
           <h1 style={{ color: '#2c3e50', margin: '0 0 10px 0' }}>Bảng vẽ GeoQuad</h1>
           <button 
             onClick={generateNewChallenge}
@@ -192,7 +150,8 @@ useEffect(() => {
           {isSuccess && <p style={{ margin: '10px 0 0 0', color: '#27ae60', fontWeight: 'bold' }}>🎉 Tuyệt vời! Bạn đã vẽ chính xác {challenge}!</p>}
         </div>
 
-        <div style={{ border: '2px solid #bdc3c7', backgroundColor: '#fff', width: '100%', height: '450px', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+        {/* Khung chứa bảng vẽ linh hoạt có thanh cuộn ngang */}
+        <div className="canvas-wrapper">
           <Stage width={800} height={450}>
             <Layer>
               <Line points={flattenedPoints} closed stroke={isSuccess ? "#27ae60" : "#3498db"} strokeWidth={4} fill={isSuccess ? "rgba(46, 204, 113, 0.2)" : "rgba(52, 152, 219, 0.2)"} />
@@ -226,13 +185,11 @@ useEffect(() => {
       </div>
 
       {/* CỘT PHẢI: Kết quả nhận diện, Toán học & Lý thuyết */}
-      <div style={{ width: '400px', backgroundColor: '#fff', padding: '25px', borderRadius: '10px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-        
+      <div className="right-column">
         <h2 style={{ color: detectedShape === challenge ? '#27ae60' : '#e74c3c', marginTop: 0, borderBottom: '2px solid #ecf0f1', paddingBottom: '15px' }}>
           Đang vẽ: {detectedShape}
         </h2>
 
-        {/* Khung công thức Toán học chuẩn LaTeX thay đổi tự động (ĐÃ THÊM OVERFLOW) */}
         <div style={{ backgroundColor: '#f4f6f7', padding: '15px', borderRadius: '8px', marginBottom: '20px', overflowX: 'auto' }}>
           <h4 style={{ margin: '0 0 10px 0', color: '#2c3e50' }}>📐 Công thức Toán học:</h4>
           
@@ -243,18 +200,18 @@ useEffect(() => {
 
           <BlockMath math={SHAPE_FORMULAS[detectedShape].perimeter} />
           <div style={{ fontSize: '13px', textAlign: 'center', color: '#7f8c8d', marginBottom: '15px' }}>
-            (Thực tế đo trên bảng: P = {perimeter.toFixed(1)} px)
+            (Thực tế đo: P = {perimeter.toFixed(1)} px)
           </div>
 
           <BlockMath math={SHAPE_FORMULAS[detectedShape].area} />
           <div style={{ fontSize: '13px', textAlign: 'center', color: '#7f8c8d' }}>
-            (Thực tế đo trên bảng: S = {area.toFixed(1)} px²)
+            (Thực tế đo: S = {area.toFixed(1)} px²)
           </div>
         </div>
         
         <div style={{ marginBottom: '30px' }}>
           <h3 style={{ color: '#2980b9' }}>Tính chất {detectedShape}:</h3>
-          <ul style={{ lineHeight: '1.8', fontSize: '15px', color: '#34495e' }}>
+          <ul style={{ lineHeight: '1.8', fontSize: '15px', color: '#34495e', paddingLeft: '20px' }}>
             {SHAPE_PROPERTIES[detectedShape].map((prop, idx) => (
               <li key={idx}>{prop}</li>
             ))}
@@ -265,17 +222,14 @@ useEffect(() => {
           Cơ sở dữ liệu Neo4j:
         </h3>
         {error && <p style={{ color: 'red' }}>Lỗi: {error}</p>}
-        <ul style={{ fontSize: '14px', color: '#7f8c8d' }}>
+        <ul style={{ fontSize: '14px', color: '#7f8c8d', paddingLeft: 0, listStyle: 'none' }}>
           {shapes.map((shape, index) => (
             <li key={index} style={{ marginBottom: '10px' }}>
               <span style={{ 
                 fontWeight: shape.name === detectedShape ? 'bold' : 'normal',
                 color: shape.name === detectedShape ? '#fff' : '#2c3e50',
                 backgroundColor: shape.name === detectedShape ? '#3498db' : '#ecf0f1',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                display: 'inline-block',
-                marginBottom: '4px'
+                padding: '4px 8px', borderRadius: '4px', display: 'inline-block', marginBottom: '4px'
               }}>
                 {shape.name}
               </span> 

@@ -1,38 +1,62 @@
-.App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+/* App.css */
+.app-container {
+  padding: 30px;
+  font-family: sans-serif;
   display: flex;
-  flex-direction: column;
+  gap: 40px;
+  background-color: #fafafa;
+  min-height: 100vh;
+  flex-wrap: wrap; /* Cho phép 2 cột rớt xuống dòng khi màn hình nhỏ */
+}
+
+.left-column {
+  flex: 1;
+  min-width: 100%; /* Mặc định chiếm 100% chiều ngang trên điện thoại */
+}
+
+.right-column {
+  width: 400px;
+  background-color: #fff;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  flex-grow: 1;
+}
+
+.canvas-wrapper {
+  border: 2px solid #bdc3c7;
+  background-color: #fff;
+  width: 100%;
+  height: 450px;
+  border-radius: 8px;
+  overflow-x: auto; /* Bật thanh cuộn ngang để người dùng điện thoại có thể vuốt xem bảng vẽ */
+  overflow-y: hidden;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.header-mobile {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+/* Giao diện trên Máy tính PC/Laptop */
+@media (min-width: 1024px) {
+  .left-column {
+    min-width: 0; /* Trả lại chia cột 60-40 cho màn hình to */
   }
-  to {
-    transform: rotate(360deg);
+}
+
+/* Giao diện trên Điện thoại */
+@media (max-width: 768px) {
+  .app-container {
+    padding: 15px;
+    gap: 20px;
+  }
+  .right-column {
+    width: 100%;
+    padding: 15px;
   }
 }
