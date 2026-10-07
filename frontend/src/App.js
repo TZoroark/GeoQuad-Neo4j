@@ -1,31 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { Stage, Layer, Line, Circle, Text } from 'react-konva';
 
-// --- CÁC HÀM TOÁN HỌC TRỢ GIÚP ---
+// --- TỪ ĐIỂN TÍNH CHẤT CHI TIẾT ---
+const SHAPE_PROPERTIES = {
+  "Tứ giác lồi": ["Tổng 4 góc trong bằng 360°."],
+  "Hình thang": ["Có 2 cạnh đối song song (gọi là hai đáy).", "Tổng 2 góc kề một cạnh bên bằng 180°."],
+  "Hình bình hành": ["Các cạnh đối song song và bằng nhau.", "Các góc đối bằng nhau.", "Hai đường chéo cắt nhau tại trung điểm mỗi đường."],
+  "Hình chữ nhật": ["Có 4 góc vuông (90°).", "Các cạnh đối song song và bằng nhau.", "Hai đường chéo bằng nhau và cắt nhau tại trung điểm."],
+  "Hình thoi": ["Có 4 cạnh bằng nhau.", "Các góc đối bằng nhau.", "Hai đường chéo vuông góc với nhau tại trung điểm.", "Hai đường chéo là các đường phân giác của các góc."],
+  "Hình vuông": ["Có 4 góc vuông (90°) và 4 cạnh bằng nhau.", "Hai đường chéo bằng nhau, vuông góc tại trung điểm.", "Hai đường chéo là đường phân giác của các góc.", "Có tâm đối xứng và 4 trục đối xứng."]
+};
 
-// 1. Tính độ dài đoạn thẳng giữa 2 điểm
+const SHAPES_LIST = ["Hình thang", "Hình bình hành", "Hình chữ nhật", "Hình thoi", "Hình vuông"];
+
+// --- CÁC HÀM TOÁN HỌC ---
 const getDistance = (p1, p2) => Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
+const getMidpoint = (p1, p2) => ({ x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 });
 
-// 2. Kiểm tra 2 đoạn thẳng có song song không (dùng Vector - Tích có hướng)
 const areParallel = (p1, p2, p3, p4) => {
   const v1 = { x: p2.x - p1.x, y: p2.y - p1.y };
   const v2 = { x: p4.x - p3.x, y: p4.y - p3.y };
   const len1 = Math.sqrt(v1.x ** 2 + v1.y ** 2);
   const len2 = Math.sqrt(v2.x ** 2 + v2.y ** 2);
   if (len1 === 0 || len2 === 0) return false;
-  
-  // Trị tuyệt đối của sin góc giữa 2 vector. Nếu gần bằng 0 -> song song
   const cross = Math.abs((v1.x * v2.y - v1.y * v2.x) / (len1 * len2));
-  return cross < 0.08; // Dung sai khoảng 4.5 độ để người dùng dễ kéo
+  return cross < 0.08; 
 };
 
-// 3. So sánh 2 độ dài có bằng nhau không (Dung sai 15 pixel)
 const isClose = (a, b) => Math.abs(a - b) < 15;
 
 function App() {
   const [shapes, setShapes] = useState([]);
   const [error, setError] = useState(null);
   const [detectedShape, setDetectedShape] = useState("Tứ giác lồi");
+  
+  // Tính năng Minigame
+  const [challenge, setChallenge] = useState("Hình bình hành");
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const [points, setPoints] = useState([
     { id: 'A', x: 150, y: 100 },
@@ -39,86 +50,113 @@ function App() {
       .then((response) => response.json())
       .then((data) => setShapes(data))
       .catch((err) => setError(err.message));
-      
-    // Nhận diện hình mặc định khi vừa mở app
     checkShape(points);
   }, []);
 
-  // --- THUẬT TOÁN NHẬN DIỆN HÌNH ---
   const checkShape = (pts) => {
     const [A, B, C, D] = pts;
 
-    // Tính độ dài 4 cạnh
     const AB = getDistance(A, B);
     const BC = getDistance(B, C);
     const CD = getDistance(C, D);
     const DA = getDistance(D, A);
-
-    // Tính 2 đường chéo
     const AC = getDistance(A, C);
     const BD = getDistance(B, D);
 
-    // Kiểm tra song song
     const isAB_CD_Parallel = areParallel(A, B, C, D);
     const isAD_BC_Parallel = areParallel(A, D, B, C);
 
-    // Logic định nghĩa các hình
     const isParallelogram = isClose(AB, CD) && isClose(BC, DA);
     const isRhombus = isParallelogram && isClose(AB, BC);
-    const isRectangle = isParallelogram && isClose(AC, BD); // HBH có 2 đường chéo bằng nhau
+    const isRectangle = isParallelogram && isClose(AC, BD); 
     const isSquare = isRhombus && isRectangle;
     const isTrapezoid = isAB_CD_Parallel || isAD_BC_Parallel;
 
-    // Cập nhật kết quả (Ưu tiên hình cấp cao nhất)
-    if (isSquare) setDetectedShape("Hình vuông");
-    else if (isRectangle) setDetectedShape("Hình chữ nhật");
-    else if (isRhombus) setDetectedShape("Hình thoi");
-    else if (isParallelogram) setDetectedShape("Hình bình hành");
-    else if (isTrapezoid) setDetectedShape("Hình thang");
-    else setDetectedShape("Tứ giác lồi");
+    let currentShape = "Tứ giác lồi";
+    if (isSquare) currentShape = "Hình vuông";
+    else if (isRectangle) currentShape = "Hình chữ nhật";
+    else if (isRhombus) currentShape = "Hình thoi";
+    else if (isParallelogram) currentShape = "Hình bình hành";
+    else if (isTrapezoid) currentShape = "Hình thang";
+
+    setDetectedShape(currentShape);
+    
+    // Kiểm tra hoàn thành thử thách
+    if (currentShape === challenge) {
+      setIsSuccess(true);
+    } else {
+      setIsSuccess(false);
+    }
   };
 
   const handleDragMove = (e, index) => {
     const newPoints = [...points];
     newPoints[index] = { ...newPoints[index], x: e.target.x(), y: e.target.y() };
     setPoints(newPoints);
-    checkShape(newPoints); // Gọi hàm nhận diện ngay khi đang kéo chuột
+    checkShape(newPoints); 
+  };
+
+  const generateNewChallenge = () => {
+    const randomShape = SHAPES_LIST[Math.floor(Math.random() * SHAPES_LIST.length)];
+    setChallenge(randomShape);
+    setIsSuccess(false);
   };
 
   const flattenedPoints = points.flatMap((p) => [p.x, p.y]);
 
-  return (
-    <div style={{ padding: '30px', fontFamily: 'sans-serif', display: 'flex', gap: '40px' }}>
-      
-      {/* CỘT TRÁI: Bảng vẽ */}
-      <div>
-        <h1 style={{ color: '#2c3e50' }}>Bảng vẽ GeoQuad</h1>
-        
-        {/* HIỂN THỊ KẾT QUẢ NHẬN DIỆN */}
-        <h2 style={{ color: '#e74c3c', marginTop: 0 }}>
-          Hệ thống nhận diện: {detectedShape}
-        </h2>
-        
-        <p><i>Kéo các đỉnh (A, B, C, D) để cố gắng tạo thành Hình chữ nhật hoặc Hình bình hành nhé!</i></p>
-        
-        <div style={{ border: '2px solid #ccc', backgroundColor: '#f9f9f9', width: '600px', height: '400px' }}>
-          <Stage width={600} height={400}>
-            <Layer>
-              <Line points={flattenedPoints} closed stroke="#3498db" strokeWidth={4} fill="rgba(52, 152, 219, 0.2)" />
+  // Tính trung điểm để vẽ text độ dài cạnh
+  const [A, B, C, D] = points;
+  const midAB = getMidpoint(A, B);
+  const midBC = getMidpoint(B, C);
+  const midCD = getMidpoint(C, D);
+  const midDA = getMidpoint(D, A);
 
-              {/* Vẽ đường chéo đứt nét để dễ căn góc */}
-              <Line points={[points[0].x, points[0].y, points[2].x, points[2].y]} stroke="#95a5a6" strokeWidth={1} dash={[5, 5]} />
-              <Line points={[points[1].x, points[1].y, points[3].x, points[3].y]} stroke="#95a5a6" strokeWidth={1} dash={[5, 5]} />
+  return (
+    <div style={{ padding: '30px', fontFamily: 'sans-serif', display: 'flex', gap: '40px', backgroundColor: '#fafafa', minHeight: '100vh' }}>
+      
+      {/* CỘT TRÁI: Bảng vẽ & Minigame */}
+      <div style={{ flex: 1 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h1 style={{ color: '#2c3e50', margin: '0 0 10px 0' }}>Bảng vẽ GeoQuad</h1>
+          
+          {/* Nút Tạo Thử Thách Mới */}
+          <button 
+            onClick={generateNewChallenge}
+            style={{ padding: '10px 15px', backgroundColor: '#3498db', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
+            Đổi bài tập
+          </button>
+        </div>
+
+        {/* Khung Thử Thách */}
+        <div style={{ padding: '15px', borderRadius: '8px', marginBottom: '15px', backgroundColor: isSuccess ? '#d5f5e3' : '#fcf3cf', border: `2px solid ${isSuccess ? '#2ecc71' : '#f1c40f'}`, transition: 'all 0.3s ease' }}>
+          <h3 style={{ margin: 0, color: isSuccess ? '#27ae60' : '#d35400' }}>
+            🎮 Thử thách: Kéo các đỉnh để tạo thành <strong>{challenge}</strong>
+          </h3>
+          {isSuccess && <p style={{ margin: '10px 0 0 0', color: '#27ae60', fontWeight: 'bold' }}>🎉 Tuyệt vời! Bạn đã vẽ chính xác {challenge}!</p>}
+        </div>
+
+        <div style={{ border: '2px solid #bdc3c7', backgroundColor: '#fff', width: '100%', height: '450px', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+          <Stage width={800} height={450}>
+            <Layer>
+              <Line points={flattenedPoints} closed stroke={isSuccess ? "#27ae60" : "#3498db"} strokeWidth={4} fill={isSuccess ? "rgba(46, 204, 113, 0.2)" : "rgba(52, 152, 219, 0.2)"} />
+              <Line points={[points[0].x, points[0].y, points[2].x, points[2].y]} stroke="#bdc3c7" strokeWidth={1} dash={[5, 5]} />
+              <Line points={[points[1].x, points[1].y, points[3].x, points[3].y]} stroke="#bdc3c7" strokeWidth={1} dash={[5, 5]} />
+
+              {/* Text Hiển thị độ dài thực tế của cạnh */}
+              <Text x={midAB.x - 15} y={midAB.y - 20} text={Math.round(getDistance(A, B))} fontSize={16} fill="#e67e22" fontStyle="bold" />
+              <Text x={midBC.x + 10} y={midBC.y - 10} text={Math.round(getDistance(B, C))} fontSize={16} fill="#e67e22" fontStyle="bold" />
+              <Text x={midCD.x - 15} y={midCD.y + 10} text={Math.round(getDistance(C, D))} fontSize={16} fill="#e67e22" fontStyle="bold" />
+              <Text x={midDA.x - 30} y={midDA.y - 10} text={Math.round(getDistance(D, A))} fontSize={16} fill="#e67e22" fontStyle="bold" />
 
               {points.map((point, index) => (
                 <React.Fragment key={point.id}>
                   <Circle
-                    x={point.x} y={point.y} radius={8} fill="#e74c3c" draggable
+                    x={point.x} y={point.y} radius={10} fill={isSuccess ? "#27ae60" : "#e74c3c"} draggable
                     onDragMove={(e) => handleDragMove(e, index)}
                     onMouseEnter={(e) => e.target.getStage().container().style.cursor = 'grab'}
                     onMouseLeave={(e) => e.target.getStage().container().style.cursor = 'default'}
                   />
-                  <Text x={point.x + 12} y={point.y - 15} text={point.id} fontSize={20} fontStyle="bold" fill="#2c3e50" />
+                  <Text x={point.x + 15} y={point.y - 20} text={point.id} fontSize={22} fontStyle="bold" fill="#2c3e50" />
                 </React.Fragment>
               ))}
             </Layer>
@@ -126,17 +164,41 @@ function App() {
         </div>
       </div>
 
-      {/* CỘT PHẢI: Lý thuyết */}
-      <div style={{ flex: 1 }}>
-        <h2 style={{ color: '#2c3e50' }}>Lý thuyết (Neo4j):</h2>
+      {/* CỘT PHẢI: Kết quả nhận diện & Lý thuyết */}
+      <div style={{ width: '400px', backgroundColor: '#fff', padding: '25px', borderRadius: '10px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+        
+        <h2 style={{ color: detectedShape === challenge ? '#27ae60' : '#e74c3c', marginTop: 0, borderBottom: '2px solid #ecf0f1', paddingBottom: '15px' }}>
+          Đang vẽ: {detectedShape}
+        </h2>
+        
+        <div style={{ marginBottom: '30px' }}>
+          <h3 style={{ color: '#2980b9' }}>Tính chất {detectedShape}:</h3>
+          <ul style={{ lineHeight: '1.8', fontSize: '15px', color: '#34495e' }}>
+            {SHAPE_PROPERTIES[detectedShape].map((prop, idx) => (
+              <li key={idx}>{prop}</li>
+            ))}
+          </ul>
+        </div>
+
+        <h3 style={{ color: '#2c3e50', borderTop: '2px solid #ecf0f1', paddingTop: '20px' }}>
+          Cơ sở dữ liệu Neo4j:
+        </h3>
         {error && <p style={{ color: 'red' }}>Lỗi: {error}</p>}
-        <ul>
+        <ul style={{ fontSize: '14px', color: '#7f8c8d' }}>
           {shapes.map((shape, index) => (
             <li key={index} style={{ marginBottom: '10px' }}>
-              <strong style={{ color: shape.name === detectedShape ? '#27ae60' : '#000' }}>
+              <span style={{ 
+                fontWeight: shape.name === detectedShape ? 'bold' : 'normal',
+                color: shape.name === detectedShape ? '#fff' : '#2c3e50',
+                backgroundColor: shape.name === detectedShape ? '#3498db' : '#ecf0f1',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                display: 'inline-block',
+                marginBottom: '4px'
+              }}>
                 {shape.name}
-              </strong> 
-              {shape.definition && <span> - {shape.definition}</span>}
+              </span> 
+              {shape.definition && <div style={{marginLeft: '10px'}}>{shape.definition}</div>}
             </li>
           ))}
         </ul>
