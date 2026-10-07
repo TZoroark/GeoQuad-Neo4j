@@ -1,0 +1,12 @@
+# Bỏ qua thư mục thư viện khổng lồ
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Bỏ qua file chứa mật khẩu database
+.env
+backend/.env
+
+# Bỏ qua các file build của React
+build/
+dist/
