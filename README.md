@@ -1,25 +1,46 @@
-# Hướng dẫn sử dụng GeoQuad (Tứ giác Interactive)
+# 📘 Hướng Dẫn Sử Dụng Ứng Dụng GeoQuad
 
-## 1. Yêu cầu hệ thống
-* Node.js (v16 trở lên)
-* Neo4j Desktop (hoặc tài khoản Neo4j AuraDB)
+Chào mừng bạn đến với **GeoQuad** - Ứng dụng học Hình học tương tác trực quan! GeoQuad được thiết kế nhằm giúp học sinh và những người yêu toán học khám phá tính chất của các loại tứ giác một cách sinh động, dễ hiểu và không kém phần thú vị.
 
-## 2. Cài đặt Cơ sở dữ liệu (Neo4j)
-1. Khởi động Neo4j.
-2. Mở Neo4j Browser, copy toàn bộ nội dung trong file `database/init_db.cypher` và chạy để tạo cơ sở tri thức hình học.
+Dưới đây là hướng dẫn chi tiết cách sử dụng các tính năng của ứng dụng.
 
-## 3. Khởi chạy Backend
-1. Mở terminal, truy cập thư mục `backend/`.
-2. Chạy lệnh: `npm install`
-3. Tạo file `.env` chứa thông tin kết nối Neo4j (NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD).
-4. Chạy server: `npm start` (Server lắng nghe ở cổng 5000).
+---
 
-## 4. Khởi chạy Frontend
-1. Mở terminal, truy cập thư mục `frontend/`.
-2. Chạy lệnh: `npm install`
-3. Chạy giao diện: `npm start` (Truy cập tại http://localhost:3000).
+## 1. Khu Vực Bảng Vẽ Tương Tác (Bên Trái)
 
-## 5. Thao tác trên ứng dụng
-* **Vẽ hình:** Click vào vùng Canvas trống để thả 4 điểm tọa độ tạo thành 1 tứ giác.
-* **Kéo thả:** Dùng chuột kéo các đỉnh, hệ thống sẽ tự động đo góc, độ dài và hiển thị tên hình tương ứng nếu thỏa mãn điều kiện (VD: Hình bình hành).
-* **Tra cứu:** Bấm vào nút "Cây phả hệ" để xem sơ đồ chuyển hóa các dạng tứ giác lấy trực tiếp từ đồ thị Neo4j.
+Đây là không gian thực hành chính, nơi bạn có thể tự do sáng tạo và kiểm chứng các quy luật hình học.
+
+*   **Kéo thả các đỉnh:** Bảng vẽ hiển thị một tứ giác với 4 đỉnh A, B, C, D (các chấm tròn màu đỏ). Bạn có thể dùng chuột (hoặc ngón tay trên điện thoại) để chạm, giữ và kéo các đỉnh này di chuyển tự do trên khung hình.
+*   **Thông số tự động:** Ngay khi bạn kéo thả, độ dài các cạnh (màu cam) và số đo các góc trong (màu đỏ) sẽ lập tức thay đổi và tính toán lại theo thời gian thực.
+*   **Nhận diện thông minh:** Hệ thống sẽ tự động phân tích tỷ lệ, góc độ và song song để nhận diện xem hình bạn vừa tạo ra là hình gì (Hình vuông, Hình bình hành, Hình thoi,...).
+*   **Thử thách vẽ hình:** Ở góc trên có nút **"Đổi bài tập"**. Khi bấm vào, hệ thống sẽ đưa ra một thử thách yêu cầu bạn phải điều chỉnh các đỉnh để tạo thành một hình cụ thể. Khi vẽ đúng, khung lưới và các đỉnh sẽ chuyển sang màu xanh lá cây 🌿 để chúc mừng bạn!
+
+---
+
+## 2. Khu Vực Học Tập & Ôn Luyện (Bên Phải)
+
+Khu vực này thay đổi linh hoạt dựa trên hình tứ giác mà bạn đang tạo ra trên bảng vẽ.
+
+*   **💡 Mẹo ghi nhớ:** Cung cấp những câu thần chú hoặc mẹo nhỏ giúp bạn nhớ nhanh đặc điểm nhận dạng của hình đang vẽ (ví dụ: Hình thoi giống như viên kim cương, hình chữ nhật là hình bình hành đứng thẳng,...).
+*   **🎯 Trắc nghiệm ôn tập:** Một câu hỏi trắc nghiệm ngắn (Mini Quiz) sẽ xuất hiện tương ứng với loại hình học đó. Hãy chọn đáp án bạn cho là đúng, hệ thống sẽ báo kết quả ngay lập tức để củng cố kiến thức. (Lưu ý: Câu hỏi sẽ tự động làm mới khi bạn vẽ ra một hình khác).
+*   **📐 Công thức Toán học:** 
+    *   Hiển thị công thức tổng quát của Chu vi (P) và Diện tích (S).
+    *   Hệ thống sẽ lấy chính xác các số đo trên bảng vẽ của bạn để thế vào công thức và đưa ra kết quả thực tế.
+    *   Có tính năng cộng tổng 4 góc để chứng minh định lý tổng các góc của một tứ giác luôn bằng 360°.
+*   **📋 Tính chất lý thuyết:** Liệt kê đầy đủ các tính chất về cạnh, góc, và đường chéo của hình (chuẩn theo sách giáo khoa).
+
+---
+
+## 3. Khu Vực Dữ Liệu Neo4j (Dưới Cùng)
+
+*   Đây là phần minh họa cho sức mạnh của Cơ sở dữ liệu đồ thị (Graph Database).
+*   Nó sẽ tải và hiển thị danh sách các định nghĩa hình học được kéo trực tiếp từ máy chủ đám mây **Neo4j AuraDB** qua API của hệ thống. Hình nào bạn đang vẽ trên màn hình sẽ được in đậm (highlight) trong danh sách dữ liệu này.
+
+---
+
+### 💡 Mẹo sử dụng trên điện thoại:
+*   GeoQuad được tối ưu hóa hoàn toàn cho thiết bị di động (Responsive).
+*   Nếu bảng vẽ quá to so với màn hình, bạn chỉ cần dùng ngón tay vuốt ngang khu vực khung vẽ để xem toàn bộ tọa độ các đỉnh mà không sợ bị vỡ giao diện.
+*   Các tính năng lý thuyết và trắc nghiệm sẽ được xếp ngay bên dưới bảng vẽ để tiện theo dõi.
+
+Chúc bạn có những giờ phút học tập và khám phá Hình học thật vui vẻ với GeoQuad!
