@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Stage, Layer, Line, Circle, Text } from 'react-konva';
 import 'katex/dist/katex.min.css';
 import { BlockMath } from 'react-katex';
-import './App.css'; // QUAN TRỌNG: Kéo file CSS vào
+import './App.css';
 
-// --- TỪ ĐIỂN TÍNH CHẤT CHI TIẾT ---
+// --- DỮ LIỆU TÍNH CHẤT ---
 const SHAPE_PROPERTIES = {
   "Tứ giác lồi": ["Tổng 4 góc trong bằng 360°."],
   "Hình thang": ["Có 2 cạnh đối song song (gọi là hai đáy).", "Tổng 2 góc kề một cạnh bên bằng 180°."],
@@ -24,6 +24,26 @@ const SHAPE_FORMULAS = {
   "Hình chữ nhật": { perimeter: "P = 2(a + b)", area: "S = a \\times b" },
   "Hình thoi": { perimeter: "P = 4a", area: "S = \\frac{1}{2} (d_1 \\times d_2)" },
   "Hình vuông": { perimeter: "P = 4a", area: "S = a^2" }
+};
+
+// --- DỮ LIỆU MẸO GHI NHỚ ---
+const SHAPE_TIPS = {
+  "Tứ giác lồi": "Cứ 4 cạnh khép kín và không có góc nào bị 'lõm' (lớn hơn 180°) thì là tứ giác lồi.",
+  "Hình thang": "Trông giống như cái thang, chỉ cần có 2 cạnh đáy song song với nhau là đủ điều kiện.",
+  "Hình bình hành": "Giống như một 'hình chữ nhật bị xô nghiêng'. Cạnh đối diện vừa song song vừa bằng nhau.",
+  "Hình chữ nhật": "Đứng thẳng lên từ hình bình hành, 4 góc đều vuông tắp 90°.",
+  "Hình thoi": "Bốn cạnh bằng nhau như viên kim cương, 2 đường chéo tạo thành hình chữ thập vuông góc.",
+  "Hình vuông": "Sự kết hợp hoàn hảo của Toán học: Vuông vắn như hình chữ nhật và đều đặn như hình thoi."
+};
+
+// --- DỮ LIỆU MINIGAME TRẮC NGHIỆM ---
+const SHAPE_QUIZZES = {
+  "Tứ giác lồi": { q: "Tổng 4 góc trong của một tứ giác lồi luôn bằng bao nhiêu độ?", options: ["180°", "270°", "360°", "540°"], a: "360°" },
+  "Hình thang": { q: "Nếu một hình thang có 1 góc vuông, nó được gọi là gì?", options: ["Hình thang cân", "Hình thang vuông", "Hình bình hành", "Hình chữ nhật"], a: "Hình thang vuông" },
+  "Hình bình hành": { q: "Hai đường chéo của hình bình hành có tính chất gì nổi bật?", options: ["Luôn bằng nhau", "Vuông góc với nhau", "Cắt nhau tại trung điểm", "Song song với nhau"], a: "Cắt nhau tại trung điểm" },
+  "Hình chữ nhật": { q: "Tính chất nào sau đây CHỈ hình chữ nhật mới có (còn hình bình hành không có)?", options: ["Các cạnh đối bằng nhau", "Hai đường chéo bằng nhau", "Các góc đối bằng nhau", "Cắt nhau tại trung điểm"], a: "Hai đường chéo bằng nhau" },
+  "Hình thoi": { q: "Đường chéo của hình thoi chia nó thành mấy tam giác vuông?", options: ["2 tam giác", "3 tam giác", "4 tam giác", "Không có"], a: "4 tam giác" },
+  "Hình vuông": { q: "Số trục đối xứng của hình vuông là bao nhiêu?", options: ["2 trục", "4 trục", "6 trục", "Vô số trục"], a: "4 trục" }
 };
 
 const SHAPES_LIST = ["Hình thang", "Hình bình hành", "Hình chữ nhật", "Hình thoi", "Hình vuông"];
@@ -67,6 +87,9 @@ function App() {
   const [detectedShape, setDetectedShape] = useState("Tứ giác lồi");
   const [challenge, setChallenge] = useState("Hình bình hành");
   const [isSuccess, setIsSuccess] = useState(false);
+  
+  // State cho phần Quiz
+  const [quizState, setQuizState] = useState({ selected: null, isCorrect: false });
 
   const [points, setPoints] = useState([
     { id: 'A', x: 150, y: 100 },
@@ -86,6 +109,11 @@ function App() {
     checkShape(points);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Reset câu hỏi trắc nghiệm khi đổi sang hình học khác
+  useEffect(() => {
+    setQuizState({ selected: null, isCorrect: false });
+  }, [detectedShape]);
 
   const checkShape = (pts) => {
     const [A, B, C, D] = pts;
@@ -121,6 +149,13 @@ function App() {
     setIsSuccess(false);
   };
 
+  const handleQuizAnswer = (answer) => {
+    setQuizState({
+      selected: answer,
+      isCorrect: answer === SHAPE_QUIZZES[detectedShape].a
+    });
+  };
+
   const flattenedPoints = points.flatMap((p) => [p.x, p.y]);
   const [A, B, C, D] = points;
   const midAB = getMidpoint(A, B), midBC = getMidpoint(B, C), midCD = getMidpoint(C, D), midDA = getMidpoint(D, A);
@@ -132,7 +167,7 @@ function App() {
   return (
     <div className="app-container">
       
-      {/* CỘT TRÁI: Bảng vẽ & Minigame */}
+      {/* CỘT TRÁI: Bảng vẽ & Thử thách */}
       <div className="left-column">
         <div className="header-mobile">
           <h1 style={{ color: '#2c3e50', margin: '0 0 10px 0' }}>Bảng vẽ GeoQuad</h1>
@@ -150,7 +185,6 @@ function App() {
           {isSuccess && <p style={{ margin: '10px 0 0 0', color: '#27ae60', fontWeight: 'bold' }}>🎉 Tuyệt vời! Bạn đã vẽ chính xác {challenge}!</p>}
         </div>
 
-        {/* Khung chứa bảng vẽ linh hoạt có thanh cuộn ngang */}
         <div className="canvas-wrapper">
           <Stage width={800} height={450}>
             <Layer>
@@ -184,11 +218,52 @@ function App() {
         </div>
       </div>
 
-      {/* CỘT PHẢI: Kết quả nhận diện, Toán học & Lý thuyết */}
+      {/* CỘT PHẢI: Mẹo, Minigame, Toán học & Neo4j */}
       <div className="right-column">
-        <h2 style={{ color: detectedShape === challenge ? '#27ae60' : '#e74c3c', marginTop: 0, borderBottom: '2px solid #ecf0f1', paddingBottom: '15px' }}>
+        <h2 style={{ color: detectedShape === challenge ? '#27ae60' : '#e74c3c', marginTop: 0, borderBottom: '2px solid #ecf0f1', paddingBottom: '10px' }}>
           Đang vẽ: {detectedShape}
         </h2>
+
+        {/* --- KHU VỰC MẸO GHI NHỚ --- */}
+        <div style={{ backgroundColor: '#e8f8f5', padding: '15px', borderRadius: '8px', marginBottom: '20px', borderLeft: '5px solid #1abc9c' }}>
+          <h3 style={{ margin: '0 0 8px 0', color: '#16a085', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            💡 Mẹo ghi nhớ:
+          </h3>
+          <p style={{ margin: 0, color: '#2c3e50', fontSize: '15px', fontStyle: 'italic', lineHeight: '1.5' }}>
+            {SHAPE_TIPS[detectedShape]}
+          </p>
+        </div>
+
+        {/* --- KHU VỰC MINIGAME TRẮC NGHIỆM --- */}
+        <div style={{ backgroundColor: '#fcf3cf', padding: '15px', borderRadius: '8px', marginBottom: '20px', borderLeft: '5px solid #f1c40f' }}>
+          <h3 style={{ margin: '0 0 12px 0', color: '#d35400' }}>🎯 Trắc nghiệm ôn tập:</h3>
+          <p style={{ fontWeight: 'bold', color: '#2c3e50', marginBottom: '12px', fontSize: '15px' }}>
+            {SHAPE_QUIZZES[detectedShape].q}
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {SHAPE_QUIZZES[detectedShape].options.map((opt, idx) => (
+              <button 
+                key={idx}
+                onClick={() => handleQuizAnswer(opt)}
+                style={{
+                  padding: '10px', textAlign: 'left', border: '1px solid #bdc3c7', borderRadius: '5px', fontSize: '14px',
+                  backgroundColor: quizState.selected === opt 
+                    ? (quizState.isCorrect ? '#2ecc71' : '#e74c3c') 
+                    : '#fff',
+                  color: quizState.selected === opt ? '#fff' : '#2c3e50',
+                  cursor: 'pointer', transition: 'all 0.2s ease', outline: 'none'
+                }}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+          {quizState.selected && (
+            <div style={{ margin: '12px 0 0 0', padding: '10px', borderRadius: '5px', backgroundColor: '#fff', fontWeight: 'bold', color: quizState.isCorrect ? '#27ae60' : '#c0392b', textAlign: 'center', border: `1px solid ${quizState.isCorrect ? '#27ae60' : '#c0392b'}` }}>
+              {quizState.isCorrect ? "✅ Chính xác! Điểm 10 cho chất lượng!" : "❌ Sai rồi, hãy thử đọc lại tính chất bên dưới nhé!"}
+            </div>
+          )}
+        </div>
 
         <div style={{ backgroundColor: '#f4f6f7', padding: '15px', borderRadius: '8px', marginBottom: '20px', overflowX: 'auto' }}>
           <h4 style={{ margin: '0 0 10px 0', color: '#2c3e50' }}>📐 Công thức Toán học:</h4>
